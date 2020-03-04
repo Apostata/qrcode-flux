@@ -8,19 +8,18 @@
 </head>
 <body>
     <h1>socket</h1>
-    <button onclick="sendMessage('thiago')">emitir</button>
-    <script src="/socket.io/socket.io.js"></script>
+    <button onclick="sendMessage('do front 1')">emitir</button>
+    <script src="sockect.io-client.js"></script>
     <script>
     
         var socket = io.connect('http://localhost:8082');
 
-        socket.on('fromback', function (data) {
-            console.log(data);
+        socket.on('qrcodeStatus', function (data) {
+            console.log('status', data);
         });
 
         const sendMessage  = mensagem =>{
-            console.log(mensagem);
-            socket.emit('fromfront', { my: mensagem });
+            socket.emit('initialize');
         };
     
     </script>
