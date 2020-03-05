@@ -1,23 +1,16 @@
+// Serve simulação do executor de pagamento que connecta com o backend da tela
+// a visualização do front é só para simular o tempo de escaneamento e pagamento pelo aplicativo
 
 import path from 'path';
-import ioClient from 'socket.io-client';
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';  
+import bodyParser from 'body-parser';
+import axios from 'axios';
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, '/public')));
-
-const socketclient = ioClient.connect('http://localhost:8082', {reconnect: true});
-
-const processQrCode = (id) => {
-    setTimeout(()=>{
-        socketclient.emit('qrcodeStatus', {status:'success', socketID:id});
-    }, 2000)
-}
-
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index2.html');
@@ -28,47 +21,18 @@ app.get('/qrcode', (req, res) =>{
 })
 
 app.post('/qrcode/proccess', (req, res) =>{
-    console.log(req)
     let { id } = req.body;
-    console.log(id);
-    socketclient.emit('qrcodeStatus', {status:'processing', socketID:id});
-    processQrCode(id);
-    // res.status(200).send({status:'pending'});
-    res.redirect('/');
-});
+    const data = `id=${id}`;
+   
+    axios.post('http://localhost:8082/qrcode/proccess', data)
+    .then(response => {
+        console.log('QRcode enviado para processamento',response.data)
+        res.redirect('/?status=enviado_processamento');
 
-
-
-const clients = [];
-
-
-const initializeQRcode = (id) =>{
-    // ... prepareQrCode
-    console.log(`initilized to id ${id}`);
-    clients.push(id);
-    console.log('initializeQRcode', {status:'wating', socketID:id});
-};
-
-const processQRCodePayment = (id) =>{
-    // ... 
-    socketclient.to(id).emit('toProcessQRcodePayment', {status:'processing', socketID:id});
-    setTimeout(()=>{
-        socketclient.emit('toProcessQRcodePayment', {status:'success', socketID:id});
-    }, 2000)
-}
-
-
-// ------------------- sockect listeners
-socketclient.on('tofront1', (data) => {
-    console.log(data);
-});
-
-socketclient.on('initializeQRcode', (id) => {
-    initializeQRcode(id);
-});
-
-socketclient.on('processQRCodePayment', (id) => {
-    processQRCodePayment(id);
+    }).catch(err=>{
+        console.log(err.error.message);
+    });
+    
 });
 
 app.listen(8083);
