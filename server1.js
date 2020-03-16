@@ -28,17 +28,23 @@ const processQrCode = (id) => {
 
 
 io.on('connection', (socket) => {
+    io.to(socket.id).emit('qrcodeStatus', 'connected');
+
     socket.on('initialize', function (){
         const id =  this.id;
-
+        console.log(`initialize - ${id}`);
         axios.get('http://localhost:8083/qrcode') // Pega QRCode
             .then(response =>{
-                const resp = {...response.data, id};
+                const resp = {...response.data, socketID:id, qrcode:"00020101021226580014br.com.padraoq0116000000000041947102080038505803040002520400005303986540515.155802BR5915Comercio Getnet6012Porto Alegre622905255413c370690269905d08dc8d781600014br.com.padraoq01122002102014530204000103020104020105020382210107c2eb118020600001863040778"};
                 io.to(id).emit('qrcodeStatus', resp);
             }).catch(err=>{
                 console.log(err);
             })
     });
+
+    socket.on('finalize', function(){
+        socket.disconnect(true);
+    })
 });
 
 app.post('/qrcode/proccess', (req, res) =>{
